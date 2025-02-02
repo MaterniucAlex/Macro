@@ -1,54 +1,35 @@
 #include "textRenderer.h"
+#include <stdio.h>
 
 SDL_Renderer *renderer;
 SDL_Texture *fontAtlas;
 
 SDL_FRect characterRect;
 
+int pxWrap = 0;
+
 void initTextRenderer(SDL_Renderer *rend, SDL_Texture *fontTexture)
 {
 	renderer = rend;
 	fontAtlas = fontTexture;
 
-	characterRect.w = 20;
-	characterRect.h = 40;
+	characterRect.w = 15;
+	characterRect.h = 24;
 }
 
-void renderText(char *text, int fontSize, int x, int y)
+void setTextWrapping(int maxWidth)
 {
-	SDL_FRect drawingRect;
-	drawingRect.x = x;
-	drawingRect.y = y;
-	drawingRect.h = fontSize;
-	drawingRect.w = fontSize / 2;
-
-	int i = 0;
-
-	while(text[i] != '\0')
-	{
-		characterRect.x = (text[i] - 32) % 32 * characterRect.w;
-		characterRect.y = (text[i] - 32) / 32 * characterRect.h;
-
-		if (characterRect.x < 0 || characterRect.y < 0)
-		{
-			characterRect.x = 0;
-			characterRect.y = 0;
-		}
-
-		SDL_RenderTexture(renderer, fontAtlas, &characterRect, &drawingRect);
-		drawingRect.x += drawingRect.w;
-		i++;
-	}
+	pxWrap = maxWidth;
 }
 
-void renderTextWrapped(char *text, int fontSize, int x, int y, int pxWrap)
+void renderText(char *text, double fontSize, int x, int y)
 {
 	int X = x;
 	SDL_FRect drawingRect;
 	drawingRect.x = x;
 	drawingRect.y = y;
-	drawingRect.h = fontSize;
-	drawingRect.w = drawingRect.h / 2;
+	drawingRect.h = characterRect.h * fontSize;
+	drawingRect.w = characterRect.w * fontSize;
 
 	int i = 0;
 
@@ -57,7 +38,7 @@ void renderTextWrapped(char *text, int fontSize, int x, int y, int pxWrap)
 		characterRect.x = (text[i] - 32) % 32 * characterRect.w;
 		characterRect.y = (text[i] - 32) / 32 * characterRect.h;
 
-		if (characterRect.x < 0 || characterRect.y < 0)
+		if (characterRect.x < 0 || characterRect.y < 0 || characterRect.x > characterRect.w * 31 || characterRect.y > characterRect.h * 2)
 		{
 			characterRect.x = 0;
 			characterRect.y = 0;
@@ -66,6 +47,7 @@ void renderTextWrapped(char *text, int fontSize, int x, int y, int pxWrap)
 		SDL_RenderTexture(renderer, fontAtlas, &characterRect, &drawingRect);
 		drawingRect.x += drawingRect.w;
 
+		if (pxWrap != 0)
 		if (drawingRect.x + drawingRect.w > X + pxWrap)
 		{
 			drawingRect.x = X;
