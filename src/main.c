@@ -2,6 +2,7 @@
 #include "SDL3/SDL.h"
 #include "SDL3_image/SDL_image.h"
 #include "./textRenderLib/textRenderer.h"
+#include "./keyInteractionLib/keyInteraction.h"
 
 void* safeCreate(void* ptr)
 {
@@ -13,12 +14,16 @@ int main() {
 
 	SDL_Init(SDL_INIT_VIDEO);
 
-	SDL_Window   *window   = SDL_CreateWindow  ("Macro", 400, 300, 0);
-	SDL_Renderer *renderer = SDL_CreateRenderer(window, NULL);
+	SDL_Window   *window   = safeCreate(SDL_CreateWindow  ("Macro", 400, 300, 0));
+	SDL_Renderer *renderer = safeCreate(SDL_CreateRenderer(window, NULL));
 
 	SDL_Texture *fontAtlas = safeCreate(IMG_LoadTexture   (renderer, "img/fontAtlas.png"));
 
 	initTextRenderer(renderer, fontAtlas);
+	setTextWrapping(400);	
+
+	char lastKeyPressed = ' ';
+	char charList[20];
 
 	SDL_Event event;
 	bool isRunning = true;
@@ -34,9 +39,18 @@ int main() {
 			}
 		}
 
+		char key = getCurrentKeyPressed();
+		if(lastKeyPressed != key && key != 0)
+		{
+			lastKeyPressed = key;
+			for(int i = 18; i >= 0; i--)
+				charList[i+1] = charList[i];
+			charList[0] = lastKeyPressed;
+		}
+
+
 		SDL_RenderClear(renderer);
-		setTextWrapping(400);	
-		renderText("AAA aaa kkk", 2, 0, 0);
+		renderText(charList, 2, 0, 0);
 		SDL_RenderPresent(renderer);
 	}
 
