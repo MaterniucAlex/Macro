@@ -5,6 +5,7 @@
 #include "SDL3_image/SDL_image.h"
 #include "./textRenderLib/textRenderer.h"
 #include "./keyInteractionLib/keyInteraction.h"
+#include "Action.h"
 
 void* safeCreate(void* ptr)
 {
@@ -24,8 +25,9 @@ int main() {
 	initTextRenderer(renderer, fontAtlas);
 	setTextWrapping(400);	
 
-	char lastKeyPressed = ' ';
-	char charList[20] = {' '};
+	Action lastAction = getCurrentAction();
+	Action actionList[20];
+	int nextActionListIndex = 0;
 
 	SDL_Event event;
 	bool isRunning = true;
@@ -41,28 +43,33 @@ int main() {
 			}
 		}
 
-		char key = getCurrentKeyPressed();
-		if (key == 8) //backspace
+		Action currentAction = getCurrentAction();
+		if (currentAction.character == 8 && currentAction.state == RELEASED) //backspace
 		{
 			for (int i = 1; i < 20; i++) 
 			{
-				pressKey(charList[i]);
-				printf("%c ", charList[i]);
-				SDL_Delay(100);
-				releaseKey(charList[i]);
+				if (actionList[i].state == PRESSED)
+					pressKey(actionList[i].character);
+				else
+					releaseKey(actionList[i].character);
+				SDL_Delay(actionList[i].timeDelay);
 			}
+			lastAction = currentAction;
 		}
-		if(lastKeyPressed != key && key != 0)
+		if((lastAction.character != currentAction.character ||
+			lastAction.state 	!= currentAction.state) && currentAction.character != 0)
 		{
-			lastKeyPressed = key;
-			for(int i = 18; i >= 0; i--)
-				charList[i+1] = charList[i];
-			charList[0] = lastKeyPressed;
+			lastAction = currentAction;
+			printf("%c::%d::%d\n", lastAction.character, lastAction.state == PRESSED, lastAction.timeDelay);
+			actionList[nextActionListIndex] = lastAction;
+			nextActionListIndex += nextActionListIndex == 20 ? -20 : 1;
 		}
 
+		char text[20];
+		for(int i = 0; i < 20; i++) text[i] = actionList[i].character;
 
 		SDL_RenderClear(renderer);
-		renderText(charList, 2, 0, 0);
+		renderText(text, 2, 0, 0);
 		SDL_RenderPresent(renderer);
 		SDL_Delay(1);
 	}
