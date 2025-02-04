@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <synchapi.h>
+#include <windows.h>
 #include "SDL3/SDL.h"
 #include "SDL3_image/SDL_image.h"
 #include "./textRenderLib/textRenderer.h"
@@ -23,7 +25,7 @@ int main() {
 	setTextWrapping(400);	
 
 	char lastKeyPressed = ' ';
-	char charList[20];
+	char charList[20] = {' '};
 
 	SDL_Event event;
 	bool isRunning = true;
@@ -40,6 +42,16 @@ int main() {
 		}
 
 		char key = getCurrentKeyPressed();
+		if (key == 8) //backspace
+		{
+			for (int i = 1; i < 20; i++) 
+			{
+				pressKey(charList[i]);
+				printf("%c ", charList[i]);
+				SDL_Delay(100);
+				releaseKey(charList[i]);
+			}
+		}
 		if(lastKeyPressed != key && key != 0)
 		{
 			lastKeyPressed = key;
@@ -52,6 +64,7 @@ int main() {
 		SDL_RenderClear(renderer);
 		renderText(charList, 2, 0, 0);
 		SDL_RenderPresent(renderer);
+		SDL_Delay(1);
 	}
 
 	SDL_DestroyRenderer(renderer);

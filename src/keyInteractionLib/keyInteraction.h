@@ -3,5 +3,7 @@
 #define KEY_INTERACTION_LIB
 
 char getCurrentKeyPressed();
+void pressKey(char keyChar);
+void releaseKey(char keyChar);
 
 #endif
