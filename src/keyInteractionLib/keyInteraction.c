@@ -11,8 +11,6 @@ Action getCurrentAction() {
 
     Action currentAction;
     currentAction.character = 0;
-    currentAction.timeDelay = 0;
-    currentAction.state = RELEASED;
 
     for (int key = 8; key <= 255; key++) {
 

@@ -1,8 +1,11 @@
 #include <stdio.h>
-#include <synchapi.h>
 #include <windows.h>
+#include <unistd.h>
+#include <pthread.h>
+
 #include "SDL3/SDL.h"
 #include "SDL3_image/SDL_image.h"
+
 #include "./textRenderLib/textRenderer.h"
 #include "./keyInteractionLib/keyInteraction.h"
 #include "Action.h"
@@ -12,6 +15,9 @@ void* safeCreate(void* ptr)
 	if (ptr == NULL) printf("%s\n", SDL_GetError());
 	return ptr;
 }
+void *pressKeysFunction(void* args);
+
+bool hasKeyPressThreadEnded = true;
 
 int main() {
 
@@ -46,27 +52,25 @@ int main() {
 		Action currentAction = getCurrentAction();
 		if (currentAction.character == 8 && currentAction.state == RELEASED) //backspace
 		{
-			for (int i = 1; i < 20; i++) 
-			{
-				if (actionList[i].state == PRESSED)
-					pressKey(actionList[i].character);
-				else
-					releaseKey(actionList[i].character);
-				SDL_Delay(actionList[i].timeDelay);
-			}
-			lastAction = currentAction;
-		}
+			if (!hasKeyPressThreadEnded) break;
+			hasKeyPressThreadEnded = false;
+			pthread_t thread_id;
+			pthread_create(&thread_id, NULL, pressKeysFunction, actionList);
+
+		} else
 		if((lastAction.character != currentAction.character ||
-			lastAction.state 	!= currentAction.state) && currentAction.character != 0)
+			lastAction.state 	 != currentAction.state)    && currentAction.character != 0)
 		{
 			lastAction = currentAction;
-			printf("%c::%d::%d\n", lastAction.character, lastAction.state == PRESSED, lastAction.timeDelay);
+			// printf("%c::%d::%d\n", lastAction.character, lastAction.state == PRESSED, lastAction.timeDelay);
 			actionList[nextActionListIndex] = lastAction;
-			nextActionListIndex += nextActionListIndex == 20 ? -20 : 1;
+			nextActionListIndex = (nextActionListIndex != 19 ? nextActionListIndex + 1 : 0);
 		}
 
+
+
 		char text[20];
-		for(int i = 0; i < 20; i++) text[i] = actionList[i].character;
+		for(int i = 0; i < 20; i++) text[i] = actionList[i].actionListcharacter;
 
 		SDL_RenderClear(renderer);
 		renderText(text, 2, 0, 0);
@@ -79,4 +83,23 @@ int main() {
 
 	SDL_Quit();
 	return 0;
+}
+
+void *pressKeysFunction(void* args)
+{
+
+	Action *actionList = (Action*)args;
+
+	for (int i = 0; i < 20; i++) 
+	{
+		if (actionList[i].character == 0) break;
+
+		if (actionList[i].timeDelay > 0)usleep(actionList[i].timeDelay * 1000);
+		if (actionList[i].state == PRESSED)
+			pressKey(actionList[i].character);
+		else
+			releaseKey(actionList[i].character);
+	}
+
+	hasKeyPressThreadEnded = true;
 }
