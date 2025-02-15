@@ -10,7 +10,7 @@ bool prevKeysPressed[256] = {false};
 Action getCurrentAction() {
 
     Action currentAction;
-    currentAction.character = 0;
+    currentAction.key = 0;
 
     for (int key = 8; key <= 255; key++) {
 
@@ -20,41 +20,35 @@ Action getCurrentAction() {
 
         prevKeysPressed[key] = isPressed;
 
+        currentAction.key = key;
         currentAction.state = isPressed ? PRESSED : RELEASED;
-
-        BYTE keyboardState[256];
-        GetKeyboardState(keyboardState);
-        WORD charCode;
-        if (ToAscii((UINT)key, MapVirtualKey(key, MAPVK_VK_TO_VSC), keyboardState, &charCode, 0) == 1) {
-            currentAction.character = charCode;
-        }
-
         currentAction.timeDelay = SDL_GetTicks() - timeSinceLastAction;
+
         timeSinceLastAction = SDL_GetTicks();
         break;
     }
 
-    return currentAction; // No key pressed
+    return currentAction;
 }
 
-void pressKey(char keyChar) {
+void pressKey(char key) {
     INPUT ip;
     ip.type = INPUT_KEYBOARD;
     ip.ki.wScan = 0;
     ip.ki.time = 0;
     ip.ki.dwExtraInfo = 0;
-    ip.ki.wVk = VkKeyScan(keyChar);
+    ip.ki.wVk = key;
     ip.ki.dwFlags = 0;
     SendInput(1, &ip, sizeof(INPUT));
 }
 
-void releaseKey(char keyChar) {
+void releaseKey(char key) {
     INPUT ip;
     ip.type = INPUT_KEYBOARD;
     ip.ki.wScan = 0;
     ip.ki.time = 0;
     ip.ki.dwExtraInfo = 0;
-    ip.ki.wVk = VkKeyScan(keyChar);
+    ip.ki.wVk = key;
     ip.ki.dwFlags = KEYEVENTF_KEYUP;
     SendInput(1, &ip, sizeof(INPUT));
 }

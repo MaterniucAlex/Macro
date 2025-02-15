@@ -5,7 +5,7 @@
 #define KEY_INTERACTION_LIB
 
 Action getCurrentAction();
-void pressKey(char keyChar);
-void releaseKey(char keyChar);
+void pressKey(char key);
+void releaseKey(char key);
 
 #endif

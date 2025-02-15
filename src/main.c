@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <time.h>
 #include <windows.h>
 #include <unistd.h>
 #include <pthread.h>
@@ -31,9 +32,10 @@ int main() {
 	initTextRenderer(renderer, fontAtlas);
 	setTextWrapping(400);	
 
-	Action lastAction = getCurrentAction();
-	Action actionList[20];
-	int nextActionListIndex = 0;
+	char *saveFileName = "lastMacro.mkr";
+	FILE *saveFile;
+
+	bool isRecording = false;
 
 	SDL_Event event;
 	bool isRunning = true;
@@ -50,33 +52,44 @@ int main() {
 		}
 
 		Action currentAction = getCurrentAction();
-		if (currentAction.character == 8 && currentAction.state == RELEASED) //backspace
-		{
-			if (!hasKeyPressThreadEnded) break;
-			hasKeyPressThreadEnded = false;
-			pthread_t thread_id;
-			pthread_create(&thread_id, NULL, pressKeysFunction, actionList);
+		if (currentAction.key != 0)
+		switch (currentAction.key) {
+			case VK_F1:
+				if (!hasKeyPressThreadEnded) break;
+				printf("started running\n");
+				hasKeyPressThreadEnded = false;
+				pthread_t thread_id;
+				pthread_create(&thread_id, NULL, pressKeysFunction, saveFileName);
+				break;
+			case VK_F2:
+				if (currentAction.state != RELEASED) break;
+				isRecording = !isRecording;
+				if (isRecording)
+				{
+					saveFile = fopen(saveFileName, "w+");
+					printf("Started Recording\n");
+				}
+				else
+				{
+					fclose(saveFile);
+					printf("Stopped Recording\n");
+				}
+				break;
+			default:
+				if (!isRecording || saveFile == NULL) break;
+				printf("Printing: %d %c %d\n",
+					currentAction.key, currentAction.state == PRESSED ? 'P' : 'R', currentAction.timeDelay);
 
-		} else
-		if((lastAction.character != currentAction.character ||
-			lastAction.state 	 != currentAction.state)    && currentAction.character != 0)
-		{
-			lastAction = currentAction;
-			// printf("%c::%d::%d\n", lastAction.character, lastAction.state == PRESSED, lastAction.timeDelay);
-			actionList[nextActionListIndex] = lastAction;
-			nextActionListIndex = (nextActionListIndex != 19 ? nextActionListIndex + 1 : 0);
+				fprintf(saveFile, "%d %c %d\n",
+					currentAction.key, currentAction.state == PRESSED ? 'P' : 'R', currentAction.timeDelay);
 		}
 
-
-
-		char text[20];
-		for(int i = 0; i < 20; i++) text[i] = actionList[i].actionListcharacter;
-
 		SDL_RenderClear(renderer);
-		renderText(text, 2, 0, 0);
 		SDL_RenderPresent(renderer);
 		SDL_Delay(1);
 	}
+
+	fclose(saveFile);
 
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
@@ -88,18 +101,31 @@ int main() {
 void *pressKeysFunction(void* args)
 {
 
-	Action *actionList = (Action*)args;
-
-	for (int i = 0; i < 20; i++) 
+	char *saveFileName = (char*) args;
+	FILE *saveFile = fopen(saveFileName, "r");
+	if (saveFile == NULL)
 	{
-		if (actionList[i].character == 0) break;
+		printf("Could not open file\n");
+		return NULL;
+	}
 
-		if (actionList[i].timeDelay > 0)usleep(actionList[i].timeDelay * 1000);
-		if (actionList[i].state == PRESSED)
-			pressKey(actionList[i].character);
-		else
-			releaseKey(actionList[i].character);
+	int key;
+	char state;
+	int timeDelay;
+
+	while (fscanf(saveFile, "%d %c %d", &key, &state, &timeDelay) == 3)
+	{
+	
+		if (key == 0) break;
+
+		printf("Waiting %d | ", timeDelay);
+		if (timeDelay > 0) usleep(timeDelay * 1000); //convert from microseconds to ms
+
+		printf("Key: %d\n", key);
+		state == 'P' ? pressKey(key) : releaseKey(key);
 	}
 
 	hasKeyPressThreadEnded = true;
+	fclose(saveFile);
+	printf("stopped running\n");
 }

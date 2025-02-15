@@ -8,7 +8,7 @@ enum KeyState {
 };
 
 typedef struct {
-	char character;
+	char key;
 	int timeDelay;
 	enum KeyState state;
 } Action;
