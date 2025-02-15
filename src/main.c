@@ -56,6 +56,7 @@ int main() {
 		if (currentAction.key != 0)
 		switch (currentAction.key) {
 			case VK_F1:
+				if (currentAction.state != RELEASED) break;
 				if (!hasKeyPressThreadEnded)
 				{
 					pthread_cancel(keyPressThread);
