@@ -36,6 +36,7 @@ int main() {
 	FILE *saveFile;
 
 	bool isRecording = false;
+	pthread_t keyPressThread;
 
 	SDL_Event event;
 	bool isRunning = true;
@@ -55,14 +56,22 @@ int main() {
 		if (currentAction.key != 0)
 		switch (currentAction.key) {
 			case VK_F1:
-				if (!hasKeyPressThreadEnded) break;
+				if (!hasKeyPressThreadEnded)
+				{
+					pthread_cancel(keyPressThread);
+					break;
+				}
+				if (isRecording)
+				{
+					isRecording = false;
+					fclose(saveFile);
+				}
 				printf("started running\n");
 				hasKeyPressThreadEnded = false;
-				pthread_t thread_id;
-				pthread_create(&thread_id, NULL, pressKeysFunction, saveFileName);
+				pthread_create(&keyPressThread, NULL, pressKeysFunction, saveFileName);
 				break;
 			case VK_F2:
-				if (currentAction.state != RELEASED) break;
+				if (currentAction.state != RELEASED || !hasKeyPressThreadEnded) break;
 				isRecording = !isRecording;
 				if (isRecording)
 				{
