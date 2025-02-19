@@ -11,6 +11,13 @@
 #include "./keyInteractionLib/keyInteraction.h"
 #include "Action.h"
 
+/*
+	TODO:
+	-Add mouse scroll & dragging
+	-Add UI
+	-Add custom loading for scripts
+*/
+
 void* safeCreate(void* ptr)
 {
 	if (ptr == NULL) printf("%s\n", SDL_GetError());
@@ -53,7 +60,7 @@ int main() {
 		}
 
 		Action currentAction = getCurrentAction();
-		if (currentAction.key != 0)
+		if (currentAction.key != -1)
 		switch (currentAction.key) {
 			case VK_F1:
 				if (currentAction.state != RELEASED) break;
@@ -87,16 +94,16 @@ int main() {
 				break;
 			default:
 				if (!isRecording || saveFile == NULL) break;
-				printf("Printing: %d %c %d\n",
-					currentAction.key, currentAction.state == PRESSED ? 'P' : 'R', currentAction.timeDelay);
+				printf("Printing: %d %c %d %d %d\n",
+					currentAction.key, currentAction.state == PRESSED ? 'P' : 'R', currentAction.timeDelay, currentAction.mouseX, currentAction.mouseY);
 
-				fprintf(saveFile, "%d %c %d\n",
-					currentAction.key, currentAction.state == PRESSED ? 'P' : 'R', currentAction.timeDelay);
+				fprintf(saveFile, "%d %c %d %d %d\n",
+					currentAction.key, currentAction.state == PRESSED ? 'P' : 'R', currentAction.timeDelay, currentAction.mouseX, currentAction.mouseY);
 		}
 
 		SDL_RenderClear(renderer);
 		SDL_RenderPresent(renderer);
-		SDL_Delay(1);
+		SDL_Delay(1); //ms
 	}
 
 	fclose(saveFile);
@@ -122,14 +129,18 @@ void *pressKeysFunction(void* args)
 	int key;
 	char state;
 	int timeDelay;
+	int mouseX;
+	int mouseY;
 
-	while (fscanf(saveFile, "%d %c %d", &key, &state, &timeDelay) == 3)
+	while (fscanf(saveFile, "%d %c %d %d %d", &key, &state, &timeDelay, &mouseX, &mouseY) == 5) // 5 = nr of values read
 	{
 	
-		if (key == 0) break;
+		if (key == -1) break;
 
 		printf("Waiting %d | ", timeDelay);
 		if (timeDelay > 0) usleep(timeDelay * 1000); //convert from microseconds to ms
+
+		if (mouseX != -1 && mouseY != -1) SetCursorPos(mouseX, mouseY);
 
 		printf("Key: %d\n", key);
 		state == 'P' ? pressKey(key) : releaseKey(key);
