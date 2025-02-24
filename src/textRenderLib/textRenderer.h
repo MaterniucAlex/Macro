@@ -7,7 +7,9 @@
 #define TEXT_RENDERER
 
 void initTextRenderer(SDL_Renderer *rend, SDL_Texture *fontTexture);
+void closeTextRenderer();
 void setTextWrapping(int maxWidth);
-void renderText(char *text, double fontSize, int x, int y);
+void renderText(char *text, double fontSizeMultiplier, int x, int y);
+void setFontColor(int r, int g, int b);
 
 #endif

@@ -17,19 +17,33 @@ void initTextRenderer(SDL_Renderer *rend, SDL_Texture *fontTexture)
 	characterRect.h = 24;
 }
 
+void closeTextRenderer()
+{
+	renderer = NULL;
+	fontAtlas = NULL;
+}
+
 void setTextWrapping(int maxWidth)
 {
 	pxWrap = maxWidth;
 }
 
-void renderText(char *text, double fontSize, int x, int y)
+void setFontColor(int r, int g, int b)
 {
+	if (renderer == NULL || fontAtlas == NULL) return;
+	SDL_SetTextureColorMod(fontAtlas, r, g, b);
+}
+
+void renderText(char *text, double fontSizeMultiplier, int x, int y)
+{
+	if (renderer == NULL || fontAtlas == NULL) return;
+	
 	int X = x;
 	SDL_FRect drawingRect;
 	drawingRect.x = x;
 	drawingRect.y = y;
-	drawingRect.h = characterRect.h * fontSize;
-	drawingRect.w = characterRect.w * fontSize;
+	drawingRect.h = characterRect.h * fontSizeMultiplier;
+	drawingRect.w = characterRect.w * fontSizeMultiplier;
 
 	int i = 0;
 

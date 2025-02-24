@@ -10,7 +10,12 @@ bool prevKeysPressed[256] = {false};
 
 Action getCurrentAction() {
 
-    Action currentAction = {-1};
+    Action currentAction;
+    currentAction.key = -1;
+    currentAction.mouseX = -1;
+    currentAction.mouseY = -1;
+    currentAction.timeDelay = 0;
+    currentAction.state = RELEASED;
 
     for (int key = 0; key <= 255; key++) {
 
